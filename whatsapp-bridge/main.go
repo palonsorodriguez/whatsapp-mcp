@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"mime"
 	"net/http"
 	"os"
 	"os/signal"
@@ -289,11 +290,18 @@ func sendWhatsAppMessage(client *whatsmeow.Client, recipient string, message str
 		case "txt", "md":
 			mediaType = whatsmeow.MediaDocument
 			mimeType = "text/plain"
+		case "zip":
+			mediaType = whatsmeow.MediaDocument
+			mimeType = "application/zip"
 
-		// Fallback for any other file type
+		// Fallback for any other file type: derive the mimetype from the extension,
+		// otherwise WhatsApp clients show the file as .bin
 		default:
 			mediaType = whatsmeow.MediaDocument
-			mimeType = "application/octet-stream"
+			mimeType = mime.TypeByExtension("." + fileExt)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
 		}
 
 		// Upload media to WhatsApp servers
