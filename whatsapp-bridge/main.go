@@ -692,8 +692,21 @@ func extractDirectPathFromURL(url string) string {
 
 	pathPart := parts[1]
 
-	// Remove query parameters
-	pathPart = strings.SplitN(pathPart, "?", 2)[0]
+	// Keep the signed query (ccb/oh/oe/_nc_sid): WhatsApp rejects the download with 403 without it.
+	// Drop only mms3, which is not part of the direct path.
+	pathAndQuery := strings.SplitN(pathPart, "?", 2)
+	pathPart = pathAndQuery[0]
+	if len(pathAndQuery) == 2 {
+		var kept []string
+		for _, kv := range strings.Split(pathAndQuery[1], "&") {
+			if !strings.HasPrefix(kv, "mms3=") {
+				kept = append(kept, kv)
+			}
+		}
+		if len(kept) > 0 {
+			pathPart += "?" + strings.Join(kept, "&")
+		}
+	}
 
 	// Create proper direct path format
 	return "/" + pathPart
